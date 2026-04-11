@@ -30,7 +30,6 @@ def optimize_model() :
         return
     global isDatapointEnough
     isDatapointEnough = True
-    logging.info("Optimizing model...")
     transitions = memory.sample(BATCH_SIZE)
     batch = Transition(*zip(*transitions))
 
