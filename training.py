@@ -24,8 +24,9 @@ logging.basicConfig(
 
 def optimize_model() :
     if len(memory) < BATCH_SIZE :
+        logging.info("Skipped Optimization due to insufficient data points")
         return
-
+    logging.info("Optimizing model...")
     transitions = memory.sample(BATCH_SIZE)
     batch = Transition(*zip(*transitions))
 
@@ -100,4 +101,5 @@ def train(num_episodes) :
 
 
 if __name__ == "__main__" : 
+    logging.info("Running with BATCH_SIZE",BATCH_SIZE)
     train(NUM_EPISODE)
