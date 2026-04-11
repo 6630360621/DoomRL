@@ -1,3 +1,13 @@
+import logging
+from datetime import datetime
+
+logging.basicConfig(
+    filename='logs/run-{}.log'.format(datetime.now().isoformat()),
+    level=logging.INFO,
+    format='%(asctime)s - [%(name)s] - %(levelname)s - %(message)s',
+    filemode="a"
+)
+
 import torch
 import torch.nn as nn
 from model import memory
@@ -8,21 +18,15 @@ from model import policy_net , target_net , optimizer
 from itertools import count
 from utils import select_action , save_state_dict
 from tqdm import tqdm
-import logging
+
 import os
-from datetime import datetime
 
 isDatapointEnough = False
 
 if(not os.path.isdir("logs")) :
     os.mkdir("logs")
 
-logging.basicConfig(
-    filename='logs/run-{}.log'.format(datetime.now().isoformat()),
-    level=logging.INFO,
-    format='%(asctime)s - [%(name)s] - %(levelname)s - %(message)s',
-    filemode="a"
-)
+
 
 def optimize_model() :
     if len(memory) < BATCH_SIZE :
