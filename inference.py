@@ -36,9 +36,21 @@ def infer(n_episodes) :
             cum_reward = 0
             game_state , info = GameEnv.reset()
             state = base_preprocessor(torch.tensor(game_state['screen'].copy() , dtype = torch.float32).unsqueeze(0).permute(0,3,1,2),device=device)
+            
+            # Initialize hidden state for CNN_LSTM
+            hidden = None
+            if ARCH == "CNN_LSTM":
+                hidden = (torch.zeros(1, policy_net.hidden_size, device=device),
+                         torch.zeros(1, policy_net.hidden_size, device=device))
+            
             for t in count() :
-                action = select_action(state.to(device),t,inference=True)
-                action_id = action.logits.item()
+                # Handle action selection based on architecture
+                if ARCH == "CNN_LSTM":
+                    logits, hidden = policy_net(state.to(device), hidden)
+                    action_id = logits.max(1).indices.view(1, 1).item()
+                else:
+                    action = select_action(state.to(device),t,inference=True)
+                    action_id = action.logits.item()
                 action_hist[action_id] += 1
                 observation , reward , terminated , truncated , _ = GameEnv.step(action_id)
                 reward = torch.tensor([reward],device=device)

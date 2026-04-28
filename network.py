@@ -86,6 +86,82 @@ class ActorCriticCNN(nn.Module):
         value = self.critic(x)
         return logits, value
 
+class CNNLSTMNet(nn.Module):
+    def __init__(self, n_actions, hidden_size=128):
+        super().__init__()
+        self.hidden_size = hidden_size
+        # CNN feature extractor
+        self.conv1 = nn.Conv2d(3, 32, 7)
+        self.conv2 = nn.Conv2d(32, 32, 4)
+        self.maxpool = nn.MaxPool2d(2)
+        self.maxpool2 = nn.MaxPool2d(2)
+        self.ff = nn.Linear(3072, 800)
+        
+        # LSTM
+        self.lstm = nn.LSTM(800, hidden_size, batch_first=True)
+        
+        # Head
+        self.head = nn.Linear(hidden_size, n_actions)
+
+    def forward(self, x, hidden=None):
+        # CNN feature extraction
+        x = F.relu(self.conv1(x))
+        x = self.maxpool(x)
+        x = F.relu(self.conv2(x))
+        x = self.maxpool2(x)
+        x = x.flatten(1)
+        x = F.relu(self.ff(x))
+        
+        # Add sequence dimension for LSTM
+        x = x.unsqueeze(1)  # (batch, 1, 800)
+        
+        # LSTM
+        x, hidden = self.lstm(x, hidden)
+        x = x[:, -1, :]  # Take last output
+        
+        # Output
+        logits = self.head(x)
+        return logits, hidden
+
+class ActorCriticCNNLSTM(nn.Module):
+    def __init__(self, n_actions, hidden_size=128):
+        super().__init__()
+        self.hidden_size = hidden_size
+        # CNN feature extractor
+        self.conv1 = nn.Conv2d(3, 32, 7)
+        self.conv2 = nn.Conv2d(32, 32, 4)
+        self.maxpool = nn.MaxPool2d(2)
+        self.maxpool2 = nn.MaxPool2d(2)
+        self.ff = nn.Linear(3072, 800)
+        
+        # LSTM
+        self.lstm = nn.LSTM(800, hidden_size, batch_first=True)
+        
+        # Heads
+        self.actor = nn.Linear(hidden_size, n_actions)
+        self.critic = nn.Linear(hidden_size, 1)
+
+    def forward(self, x, hidden=None):
+        # CNN feature extraction
+        x = F.relu(self.conv1(x))
+        x = self.maxpool(x)
+        x = F.relu(self.conv2(x))
+        x = self.maxpool2(x)
+        x = x.flatten(1)
+        x = F.relu(self.ff(x))
+        
+        # Add sequence dimension for LSTM
+        x = x.unsqueeze(1)
+        
+        # LSTM
+        x, hidden = self.lstm(x, hidden)
+        x = x[:, -1, :]
+        
+        # Output
+        logits = self.actor(x)
+        value = self.critic(x)
+        return logits, value
+
 def create_q_network(arch, n_actions):
     if arch == "Baseline":
         if METHOD == "PPO":
@@ -95,6 +171,10 @@ def create_q_network(arch, n_actions):
         if METHOD == "PPO":
             return ActorCriticResNet(n_actions=n_actions)
         return ResNet(n_actions=n_actions)
+    if arch == "CNN_LSTM":
+        if METHOD == "PPO":
+            return ActorCriticCNNLSTM(n_actions=n_actions)
+        return CNNLSTMNet(n_actions=n_actions)
     raise ValueError(f"Unsupported ARCH: {arch}")
 
 if __name__ == "__main__" :

@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from model import memory
 from config import *
-from datamodel import Transition , training_info
+from datamodel import Transition , training_info, ActionRes
 from env import device , env as GameEnv
 from model import policy_net , target_net , optimizer
 if METHOD == "PPO":
@@ -18,6 +18,8 @@ from inference import infer
 import wandb
 import os
 from tensordict import TensorDict
+import random
+import math
 
 
 if(not os.path.isdir("logs")) :
@@ -161,8 +163,27 @@ def train(num_episodes,preprocessor) :
             game_state , info = GameEnv.reset()
             state = torch.tensor(game_state['screen'].copy() , dtype = torch.float32).unsqueeze(0).permute(0,3,1,2)
             processed_state = preprocessor(state,device=device)
+            
+            # Initialize hidden state for CNN_LSTM
+            hidden = None
+            if ARCH == "CNN_LSTM":
+                hidden = (torch.zeros(1, policy_net.hidden_size, device=device),
+                         torch.zeros(1, policy_net.hidden_size, device=device))
+            
             for t in count() :
-                action = select_action(processed_state,training_info.learning_step)
+                # Handle action selection based on architecture
+                if ARCH == "CNN_LSTM":
+                    sample = random.random()
+                    eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-training_info.learning_step / EPS_DECAY)
+                    with torch.no_grad():
+                        if sample > eps_threshold:
+                            logits, hidden = policy_net(processed_state, hidden)
+                            action_id = logits.max(1).indices.view(1, 1)
+                        else:
+                            action_id = torch.tensor([[GameEnv.action_space.sample()]], device=device, dtype=torch.long)
+                    action = ActionRes(training_info.learning_step, action_id)
+                else:
+                    action = select_action(processed_state,training_info.learning_step)
                 observation , reward , terminated , truncated , _ = GameEnv.step(action.logits.item())
                 if iteration_mode == "steps" :
                     iteration.n = training_info.learning_step
@@ -196,10 +217,20 @@ def train(num_episodes,preprocessor) :
                     # Optimization: Reuse next_obs for the next step's processed_state
                     state = next_state
                     processed_state = next_obs
+                    
+                    # Reset hidden state for CNN_LSTM on done (for PPO, we don't use hidden across episodes)
+                    if done and ARCH == "CNN_LSTM":
+                        hidden = (torch.zeros(1, policy_net.hidden_size, device=device),
+                                 torch.zeros(1, policy_net.hidden_size, device=device))
                 else:
                     memory.push(state , action.logits , next_state , reward)
                     state = next_state
                     processed_state = preprocessor(state, device=device)
+                    
+                    # Reset hidden state for CNN_LSTM on done
+                    if done and ARCH == "CNN_LSTM":
+                        hidden = (torch.zeros(1, policy_net.hidden_size, device=device),
+                                 torch.zeros(1, policy_net.hidden_size, device=device))
 
                 cum_reward += reward.item()
 
