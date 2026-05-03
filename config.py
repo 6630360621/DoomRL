@@ -55,6 +55,9 @@ BETA_START = data.get('BETA_START', 0.4)
 BETA_END = data.get('BETA_END', 1.0)
 PER_EPSILON = data.get('PER_EPSILON', 1e-6)
 
+# CNN_LSTM model parameters
+LSTM_HIDDEN = data.get('LSTM_HIDDEN', 512)
+
 if SAMPLING_METHOD == "PER" and MAX_STEPS is None:
     raise ValueError(
         "SAMPLING_METHOD='PER' requires MAX_STEPS to be set in cfg.yml "

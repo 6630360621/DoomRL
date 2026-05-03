@@ -44,8 +44,12 @@ def infer(n_episodes) :
                          torch.zeros(1, policy_net.hidden_size, device=device))
             
             for t in count() :
-                # Handle action selection based on architecture
-                if ARCH == "CNN_LSTM":
+                # PPO inference uses select_action(); it is compatible with actor/value nets.
+                if METHOD == "PPO":
+                    action = select_action(state.to(device), t, inference=True)
+                    action_id = action.logits.item()
+                # Handle action selection based on architecture for off-policy methods.
+                elif ARCH == "CNN_LSTM":
                     logits, hidden = policy_net(state.to(device), hidden)
                     action_id = logits.max(1).indices.view(1, 1).item()
                 else:

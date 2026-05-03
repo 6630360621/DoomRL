@@ -16,7 +16,7 @@ class CNN(nn.Module) :
         self.conv2 = nn.Conv2d(32,32,4)
         self.maxpool = nn.MaxPool2d(2)
         self.maxpool2 = nn.MaxPool2d(2)
-        self.ff = nn.Linear(3072,800)
+        self.ff = nn.LazyLinear(800)
         self.ff2 = nn.Linear(800,n_actions)
         
     
@@ -70,7 +70,7 @@ class ActorCriticCNN(nn.Module):
         self.conv2 = nn.Conv2d(32, 32, 4)
         self.maxpool = nn.MaxPool2d(2)
         self.maxpool2 = nn.MaxPool2d(2)
-        self.ff = nn.Linear(3072, 800)
+        self.ff = nn.LazyLinear(800)
         
         self.actor = nn.Linear(800, n_actions)
         self.critic = nn.Linear(800, 1)
@@ -95,7 +95,7 @@ class CNNLSTMNet(nn.Module):
         self.conv2 = nn.Conv2d(32, 32, 4)
         self.maxpool = nn.MaxPool2d(2)
         self.maxpool2 = nn.MaxPool2d(2)
-        self.ff = nn.Linear(3072, 800)
+        self.ff = nn.LazyLinear(800)
         
         # LSTM
         self.lstm = nn.LSTM(800, hidden_size, batch_first=True)
@@ -132,7 +132,7 @@ class ActorCriticCNNLSTM(nn.Module):
         self.conv2 = nn.Conv2d(32, 32, 4)
         self.maxpool = nn.MaxPool2d(2)
         self.maxpool2 = nn.MaxPool2d(2)
-        self.ff = nn.Linear(3072, 800)
+        self.ff = nn.LazyLinear(800)
         
         # LSTM
         self.lstm = nn.LSTM(800, hidden_size, batch_first=True)
@@ -173,8 +173,8 @@ def create_q_network(arch, n_actions):
         return ResNet(n_actions=n_actions)
     if arch == "CNN_LSTM":
         if METHOD == "PPO":
-            return ActorCriticCNNLSTM(n_actions=n_actions)
-        return CNNLSTMNet(n_actions=n_actions)
+            return ActorCriticCNNLSTM(n_actions=n_actions, hidden_size=LSTM_HIDDEN)
+        return CNNLSTMNet(n_actions=n_actions, hidden_size=LSTM_HIDDEN)
     raise ValueError(f"Unsupported ARCH: {arch}")
 
 if __name__ == "__main__" :

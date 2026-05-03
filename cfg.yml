@@ -7,17 +7,17 @@ EPS_DECAY: 10000
 TAU: 0.005
 NUM_EPISODE: null
 MEMORY_CAP: 10000
-ARCH: "ResNet"
+ARCH: "CNN_LSTM"
 VERSION: "v0"
 FRAME_SKIP: 4
 PRELOAD_WEIGHT: null # path to pretrained weight (if any)
 CHKPOINT_NUM: 1 # last chkpoint num + 1 (if you don't want to lose progress)
 RENDER_MODE: null # null for terminal training and 'human' for rendering
 RESOLUTION : 'RES_160x120'
-SAVING_INTERVAL: 5000
-VALIDATION_INTERVAL : 5000
-VALIDATION_EPISODES : 1000
-MAX_STEPS: 600000
+SAVING_INTERVAL: 10000
+VALIDATION_INTERVAL : 10000
+VALIDATION_EPISODES : 50
+MAX_STEPS: 100000
 SCENARIO_NAME : "VizdoomBasic-v1"
 VARIANT : "basic"
 
@@ -29,11 +29,12 @@ PPO_CLIP: 0.2 # clip parameter for PPO
 ENTROPY_COEF: 0.01 # coefficient for entropy bonus
 CRITIC_COEF: 0.5  # coefficient for critic loss
 GAE_LAMBDA: 0.95 # lambda for Generalized Advantage Estimation
-PPO_BATCH_SIZE: 16 # batch size for PPO updates 
-PPO_BUFFER_SIZE: 128 # number of transitions to collect before updating the policy
+PPO_BATCH_SIZE: 64 # batch size for PPO updates (increased for efficiency)
+PPO_BUFFER_SIZE: 2048 # number of transitions to collect before updating the policy (increased for stability)
 
 SAMPLING_METHOD: "PER" # Uniform | PER
 ALPHA: 0.6
 BETA_START: 0.4
 BETA_END: 1.0
 PER_EPSILON: 0.000001
+LSTM_HIDDEN: 256              # LSTM hidden size for CNN_LSTM architecture (reduced for speed)

@@ -171,8 +171,11 @@ def train(num_episodes,preprocessor) :
                          torch.zeros(1, policy_net.hidden_size, device=device))
             
             for t in count() :
-                # Handle action selection based on architecture
-                if ARCH == "CNN_LSTM":
+                # PPO action must come from select_action() to carry action.td for rollout storage.
+                if METHOD == "PPO":
+                    action = select_action(processed_state, training_info.learning_step)
+                # Handle action selection based on architecture for off-policy methods.
+                elif ARCH == "CNN_LSTM":
                     sample = random.random()
                     eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-training_info.learning_step / EPS_DECAY)
                     with torch.no_grad():
@@ -292,6 +295,17 @@ def train(num_episodes,preprocessor) :
         wandb.finish()
 
 
+def warmup_policy_net_for_lazy_layers(preprocessor):
+    """Run one forward pass to initialize lazy layers before wandb hooks."""
+    with torch.no_grad():
+        game_state, _ = GameEnv.reset()
+        state = torch.tensor(game_state['screen'].copy(), dtype=torch.float32).unsqueeze(0).permute(0,3,1,2)
+        processed_state = preprocessor(state, device=device)
+        policy_net.eval()
+        _ = policy_net(processed_state)
+        policy_net.train()
+
+
 if __name__ == "__main__" : 
     api_key = input("Enter wandb API key: ").strip()
     wandb.login(key=api_key)
@@ -309,6 +323,7 @@ if __name__ == "__main__" :
             "beta_end": BETA_END if SAMPLING_METHOD == "PER" else None,
         }
     )
+    warmup_policy_net_for_lazy_layers(base_preprocessor)
     wandb.watch(policy_net, log="all", log_freq=100)
     logging.info("Running with {}".format(BATCH_SIZE))
     train(NUM_EPISODE,base_preprocessor)

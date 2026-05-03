@@ -74,8 +74,15 @@ if METHOD == "PPO":
         loss_critic_type="smooth_l1",
     )
 
+    # LSTM-backed value nets are not compatible with torch vmap over aten::lstm.
+    # Disable vectorized GAE to avoid "Batching rule not implemented for aten::lstm.input".
     advantage_module = GAE(
-        gamma=GAMMA, lmbda=GAE_LAMBDA, value_network=value_module, average_gae=True
+        gamma=GAMMA,
+        lmbda=GAE_LAMBDA,
+        value_network=value_module,
+        average_gae=True,
+        vectorized=False,
+        deactivate_vmap=True,
     )
 
     target_net = None # PPO doesn't use target_net in the same way as DQN
