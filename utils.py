@@ -72,5 +72,5 @@ def save_state_dict(model, optimizer, steps=None, persisted=False):
 
     torch.save({
         'model': localModel.state_dict(),
-        'optimizer': localOptimizer.state_dict()
+        #'optimizer': localOptimizer.state_dict()
     }, save_path)

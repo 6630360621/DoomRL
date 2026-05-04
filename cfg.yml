@@ -17,9 +17,9 @@ RESOLUTION : 'RES_160x120'
 SAVING_INTERVAL: 10000
 VALIDATION_INTERVAL : 10000
 VALIDATION_EPISODES : 50
-MAX_STEPS: 100000
-SCENARIO_NAME : "VizdoomBasic-v1"
-VARIANT : "basic"
+MAX_STEPS: 600000
+SCENARIO_NAME : "VizdoomHealthGathering-v1"
+VARIANT : "health_gather"
 
 METHOD: "PPO" # DQN | DDQN | PPO
 
@@ -29,8 +29,8 @@ PPO_CLIP: 0.2 # clip parameter for PPO
 ENTROPY_COEF: 0.01 # coefficient for entropy bonus
 CRITIC_COEF: 0.5  # coefficient for critic loss
 GAE_LAMBDA: 0.95 # lambda for Generalized Advantage Estimation
-PPO_BATCH_SIZE: 64 # batch size for PPO updates (increased for efficiency)
-PPO_BUFFER_SIZE: 2048 # number of transitions to collect before updating the policy (increased for stability)
+PPO_BATCH_SIZE: 16 # batch size for PPO updates (increased for efficiency)
+PPO_BUFFER_SIZE: 128 # number of transitions to collect before updating the policy (increased for stability)
 
 SAMPLING_METHOD: "PER" # Uniform | PER
 ALPHA: 0.6
